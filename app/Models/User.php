@@ -2,52 +2,66 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasName
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    public function getFilamentName(): string
+    {
+        return trim(($this->first_name ?? '').' '.($this->surname ?? '')) ?: ($this->email ?? 'User');
+    }
+
     protected $fillable = [
-        'name',
+        'force_number',
+        'first_name',
+        'surname',
         'email',
+        'phone_number',
+        'role',
         'password',
+        'is_active',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    protected $hidden = ['password', 'remember_token'];
 
-    public function isAdmin()
-{
-    return $this->role === 'admin';
-}
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    public function getNameAttribute(): string
+    {
+        return trim((string) ($this->first_name ?? '').' '.(string) ($this->surname ?? ''));
+    }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return (bool) ($this->is_active ?? true);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'ADMIN';
+    }
+
+    public function isPhotographer(): bool
+    {
+        return $this->role === 'PHOTOGRAPHER';
+    }
+
+    public function assignedCases(): HasMany
+    {
+        return $this->hasMany(CaseModel::class, 'photographer_id');
     }
 }
