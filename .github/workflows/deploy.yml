@@ -17,24 +17,30 @@ jobs:
         run: |
           $destination = "C:\inetpub\wwwroot\cid_studios"
 
-          # Create target directory if it does not exist
+          # Create target directory if missing
           if (-not (Test-Path $destination)) {
               New-Item -ItemType Directory -Path $destination -Force
           }
 
-          # Copy code to IIS web root (excluding git metadata)
-          Copy-Item -Path ".*", "*" -Destination $destination -Recurse -Force -Exclude ".git"
+          # Use Robocopy for reliable file sync without locking errors
+          robocopy . $destination /E /XD .git /XF .gitignore /NJH /NJS /NDL /nc /ns /np
+          if ($LASTEXITCODE -ge 8) {
+              throw "Robocopy copy failed with exit code $LASTEXITCODE"
+          }
 
           Set-Location $destination
 
-          # Execute framework optimization commands if artisan exists
+          # Optional Laravel cache refresh
           if (Test-Path "artisan") {
               php artisan config:cache
               php artisan route:cache
               php artisan view:cache
           }
 
-          # Restart IIS AppPool to refresh running worker process
-          # Replace 'DefaultAppPool' with your actual IIS AppPool name if customized
-          Import-Module WebAdministration
-          Restart-WebAppPool -Name "DefaultAppPool"
+          # Attempt IIS AppPool restart safely
+          try {
+              Import-Module WebAdministration -ErrorAction Stop
+              Get-ChildItem IIS:\AppPools | ForEach-Object { Restart-WebAppPool -Name $_.name -ErrorAction SilentlyContinue }
+          } catch {
+              Write-Host "Skipping IIS AppPool restart: WebAdministration module not present."
+          }
