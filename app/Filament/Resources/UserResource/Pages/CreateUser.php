@@ -30,7 +30,7 @@ class CreateUser extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getCreateFormAction()->label('Save User'),
+            $this->getCreateFormAction()->label('Save'),
             $this->getCancelFormAction()->label('Cancel')->outlined(),
         ];
     }
