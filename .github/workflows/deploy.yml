@@ -1,0 +1,40 @@
+name: Deploy CID Studios to IIS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Sync Files to IIS Web Root
+        shell: powershell
+        run: |
+          $destination = "C:\inetpub\wwwroot\cid_studios"
+
+          # Create target directory if it does not exist
+          if (-not (Test-Path $destination)) {
+              New-Item -ItemType Directory -Path $destination -Force
+          }
+
+          # Copy code to IIS web root (excluding git metadata)
+          Copy-Item -Path ".*", "*" -Destination $destination -Recurse -Force -Exclude ".git"
+
+          Set-Location $destination
+
+          # Execute framework optimization commands if artisan exists
+          if (Test-Path "artisan") {
+              php artisan config:cache
+              php artisan route:cache
+              php artisan view:cache
+          }
+
+          # Restart IIS AppPool to refresh running worker process
+          # Replace 'DefaultAppPool' with your actual IIS AppPool name if customized
+          Import-Module WebAdministration
+          Restart-WebAppPool -Name "DefaultAppPool"
