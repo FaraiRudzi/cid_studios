@@ -46,16 +46,16 @@ class StationResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('code')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('province')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('cases_count')
                     ->label('Cases')
                     ->getStateUsing(fn (Station $record) => $record->cases()->count())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d M Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime('d M Y')
+                    ->sortable(),
             ])
             ->filters([])
             ->actions([
@@ -64,7 +64,8 @@ class StationResource extends Resource
             ])
             ->bulkActions([
                 DeleteBulkAction::make()->visible(fn () => auth()->user()?->isAdmin()),
-            ]);
+            ])
+            ->stackedOnMobile();
     }
 
     public static function getPages(): array

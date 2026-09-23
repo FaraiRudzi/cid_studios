@@ -83,7 +83,7 @@ return new class extends Migration
         Schema::create('case_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('case_id')->constrained('cases')->onDelete('cascade');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('no action');
             $table->string('action');
             $table->string('role');
             $table->text('description');

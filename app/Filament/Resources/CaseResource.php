@@ -14,7 +14,6 @@ use Filament\Forms;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Section as FormSection;
 use Filament\Schemas\Schema;
@@ -73,124 +72,250 @@ class CaseResource extends Resource
         return $query;
     }
 
-    public static function form(Schema $schema): Schema
-    {
-        return $schema->components([
-            Group::make()->schema([
-                FormSection::make('Case Details')->schema([
-                    Forms\Components\TextInput::make('scene_reference_number')
-                        ->label('Scene Reference')
-                        ->placeholder('Auto-generated')
-                        ->disabled(),
-                    Forms\Components\TextInput::make('reference_number')
-                        ->label('Station Reference (CR Number)')
-                        ->required(),
-                    Forms\Components\Select::make('station_id')
-                        ->relationship('station', 'name')
-                        ->searchable()
-                        ->preload()
-                        ->required(),
-                    Forms\Components\Select::make('case_type')
-                        ->options([
-                            'Sudden Death' => 'Sudden Death',
-                            'Murder' => 'Murder',
-                            'ID Parade' => 'ID Parade',
-                            'Indications' => 'Indications',
-                            'Other' => 'Other',
-                        ])
-                        ->required(),
-                    Forms\Components\Select::make('photographer_id')
-                        ->label('Assigned Photographer')
-                        ->options(User::where('role', 'PHOTOGRAPHER')->get()->pluck('name', 'id'))
-                        ->required()
-                        ->visible(fn () => Auth::user()?->role === 'ADMIN'),
-                    Forms\Components\Select::make('status')
-                        ->options(['OPEN' => 'OPEN', 'PENDING_REVIEW' => 'PENDING_REVIEW', 'CLOSED' => 'CLOSED'])
-                        ->default('OPEN')
-                        ->required(),
-                ])->columns(2),
+    // public static function form(Schema $schema): Schema
+    // {
+    //     return $schema->components([
+    //         FormSection::make('Case Details')->schema([
+    //             Forms\Components\TextInput::make('scene_reference_number')
+    //                 ->label('Scene Reference')
+    //                 ->placeholder('Auto-generated')
+    //                 ->disabled(),
+    //             Forms\Components\TextInput::make('reference_number')
+    //                 ->label('Station Reference (CR Number)')
+    //                 ->required(),
+    //             Forms\Components\Select::make('station_id')
+    //                 ->relationship('station', 'name')
+    //                 ->searchable()
+    //                 ->preload()
+    //                 ->required(),
+    //             Forms\Components\Select::make('case_type')
+    //                 ->options([
+    //                     'Sudden Death' => 'Sudden Death',
+    //                     'Murder' => 'Murder',
+    //                     'ID Parade' => 'ID Parade',
+    //                     'Indications' => 'Indications',
+    //                     'Other' => 'Other',
+    //                 ])
+    //                 ->required(),
+    //             Forms\Components\Select::make('photographer_id')
+    //                 ->label('Assigned Photographer')
+    //                 ->options(User::where('role', 'PHOTOGRAPHER')->get()->pluck('name', 'id'))
+    //                 ->required()
+    //                 ->visible(fn () => Auth::user()?->role === 'ADMIN'),
+    //             Forms\Components\Select::make('status')
+    //                 ->options(['OPEN' => 'OPEN', 'PENDING_REVIEW' => 'PENDING_REVIEW', 'CLOSED' => 'CLOSED'])
+    //                 ->default('OPEN')
+    //                 ->required(),
+    //         ])->columns(2),
 
-                FormSection::make('Circumstances')->schema([
-                    Forms\Components\Textarea::make('circumstances')->rows(4),
-                    Forms\Components\TextInput::make('cause_of_death'),
-                ]),
+    //         FormSection::make('Brief Circumstances')->schema([
+    //             Forms\Components\Textarea::make('circumstances')->rows(4),
+    //             Forms\Components\TextInput::make('cause_of_death'),
+    //         ])->columns(2),
 
-                FormSection::make('Persons Involved')->schema([
-                    Forms\Components\Repeater::make('people')
-                        ->label('Case participants')
-                        ->addActionLabel('Add person')
-                        ->itemLabel(fn (array $state): ?string => (
-                            ($state['role'] ?? null)
-                                ? ucfirst($state['role']).' • '.trim((($state['first_name'] ?? '').' '.($state['surname'] ?? '')))
-                                : 'New person'
-                        ))
-                        ->collapsed()
-                        ->schema([
-                            Forms\Components\Select::make('role')
-                                ->options([
-                                    'informant' => 'Informant',
-                                    'deceased' => 'Deceased',
-                                    'accused' => 'Accused',
-                                    'complainant' => 'Complainant',
-                                    'witness' => 'Witness',
-                                    'other' => 'Other',
-                                ])
-                                ->required()
-                                ->placeholder('Select role'),
-                            Forms\Components\TextInput::make('first_name')->required(),
-                            Forms\Components\TextInput::make('surname')->required(),
-                            Forms\Components\TextInput::make('id_number')
-                                ->label('ID Number')
-                                ->live()
-                                ->inputMode('text')
-                                ->rule('regex:/^\d{2}-\d{6,7}[A-Z]\d{2}$/i')
-                                ->helperText('Format: 18-118656Q18'),
-                            Forms\Components\Select::make('gender')
-                                ->options(['MALE' => 'MALE', 'FEMALE' => 'FEMALE', 'UNKNOWN' => 'UNKNOWN'])
-                                ->placeholder('Select gender'),
-                            Forms\Components\TextInput::make('phone_number')
-                                ->live()
-                                ->tel()
-                                ->inputMode('tel')
-                                ->rule('regex:/^(?:\+263|00263|0)(?:7[1-8]|7[7-9])\d{7}$/'),
-                            Forms\Components\Textarea::make('address')->rows(2)->columnSpanFull(),
-                            Forms\Components\Textarea::make('notes')->columnSpanFull(),
-                        ])->columns(3)->defaultItems(0),
-                ]),
-            ])->columnSpan(2),
+    //         FormSection::make('People Involved')->schema([
+    //             Forms\Components\Repeater::make('people')
+    //                 ->label('Case participants')
+    //                 ->addActionLabel('Add person')
+    //                 ->itemLabel(fn (array $state): ?string => (
+    //                     ($state['role'] ?? null)
+    //                         ? ucfirst($state['role']).' • '.trim((($state['first_name'] ?? '').' '.($state['surname'] ?? '')))
+    //                         : 'New person'
+    //                 ))
+    //                 ->collapsed()
+    //                 ->schema([
+    //                     Forms\Components\Select::make('role')
+    //                         ->options([
+    //                             'informant' => 'Informant',
+    //                             'deceased' => 'Deceased',
+    //                             'accused' => 'Accused',
+    //                             'complainant' => 'Complainant',
+    //                             'witness' => 'Witness',
+    //                             'other' => 'Other',
+    //                         ])
+    //                         ->required()
+    //                         ->placeholder('Select role'),
+    //                     Forms\Components\TextInput::make('first_name')->required(),
+    //                     Forms\Components\TextInput::make('surname')->required(),
+    //                     Forms\Components\TextInput::make('id_number')
+    //                         ->label('ID Number')
+    //                         ->live()
+    //                         ->inputMode('text')
+    //                         ->rule('regex:/^\d{2}-\d{6,7}[A-Z]\d{2}$/i')
+    //                         ->helperText('Format: 18-118656Q18'),
+    //                     Forms\Components\Select::make('gender')
+    //                         ->options(['MALE' => 'MALE', 'FEMALE' => 'FEMALE', 'UNKNOWN' => 'UNKNOWN'])
+    //                         ->placeholder('Select gender'),
+    //                     Forms\Components\TextInput::make('phone_number')
+    //                         ->live()
+    //                         ->tel()
+    //                         ->inputMode('tel')
+    //                         ->rule('regex:/^(?:\+263|00263|0)(?:7[1-8]|7[7-9])\d{7}$/'),
+    //                     Forms\Components\Textarea::make('address')->rows(2)->columnSpanFull(),
+    //                     Forms\Components\Textarea::make('notes')->columnSpanFull(),
+    //                 ])->columns(3)->defaultItems(0),
+    //         ]),
 
-            Group::make()->schema([
-                Section::make('Case Media')
-                    ->visible(fn (?CaseModel $record = null) => Auth::user()?->role === 'PHOTOGRAPHER' || ($record !== null && Auth::user()?->role === 'ADMIN'))
-                    ->schema([
-                        Forms\Components\Repeater::make('media')
-                            ->addable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
-                            ->deletable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
-                            ->reorderable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
-                            ->disabled(fn () => Auth::user()?->role === 'ADMIN')
-                            ->schema([
-                                Forms\Components\TextInput::make('title')
-                                    ->required()
-                                    ->placeholder('e.g. Scene photos')
-                                    ->disabled(fn () => Auth::user()?->role === 'ADMIN'),
-                                Forms\Components\FileUpload::make('file_path')
-                                    ->disk('public')
-                                    ->directory('case-media')
-                                    ->acceptedFileTypes(['image/*', 'video/*'])
-                                    ->multiple()
-                                    ->maxSize(524288000)
-                                    ->maxFiles(50)
-                                    ->maxParallelUploads(10)
-                                    ->previewable(true)
-                                    ->removeUploadedFileButtonPosition('center bottom')
-                                    ->deletable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
-                                    ->disabled(fn () => Auth::user()?->role === 'ADMIN'),
-                                Forms\Components\Hidden::make('uploaded_by')->default(Auth::id()),
-                            ]),
-                    ]),
-            ])->columnSpan(2),
-        ])->columns(3);
-    }
+    //         Section::make('Case Media')
+    //             ->visible(fn (?CaseModel $record = null) => Auth::user()?->role === 'PHOTOGRAPHER' || ($record !== null && Auth::user()?->role === 'ADMIN'))
+    //             ->schema([
+    //                 Forms\Components\Repeater::make('media')
+    //                     ->addable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
+    //                     ->deletable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
+    //                     ->reorderable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
+    //                     ->disabled(fn () => Auth::user()?->role === 'ADMIN')
+    //                     ->schema([
+    //                         Forms\Components\TextInput::make('title')
+    //                             ->required()
+    //                             ->placeholder('e.g. Scene photos')
+    //                             ->disabled(fn () => Auth::user()?->role === 'ADMIN'),
+    //                         Forms\Components\FileUpload::make('file_path')
+    //                             ->disk('public')
+    //                             ->directory('case-media')
+    //                             ->acceptedFileTypes(['image/*', 'video/*'])
+    //                             ->multiple()
+    //                             ->maxSize(524288000)
+    //                             ->maxFiles(50)
+    //                             ->maxParallelUploads(10)
+    //                             ->previewable(true)
+    //                             ->removeUploadedFileButtonPosition('center bottom')
+    //                             ->deletable(fn () => Auth::user()?->role === 'PHOTOGRAPHER')
+    //                             ->disabled(fn () => Auth::user()?->role === 'ADMIN'),
+    //                         Forms\Components\Hidden::make('uploaded_by')->default(Auth::id()),
+    //                     ]),
+    //             ]),
+    //     ])->columns(2);
+    // }
+
+    public static function form(Schema $schema): Schema 
+{ 
+    return $schema->components([ 
+        Forms\Components\TextInput::make('scene_reference_number') 
+            ->label('Scene Reference') 
+            ->placeholder('Auto-generated') 
+            ->disabled(), 
+
+        Forms\Components\TextInput::make('reference_number') 
+            ->label('Station Reference (CR Number)') 
+            ->required(), 
+
+        Forms\Components\Select::make('station_id') 
+            ->relationship('station', 'name') 
+            ->searchable() 
+            ->preload() 
+            ->required(), 
+
+        Forms\Components\Select::make('case_type') 
+            ->options([ 
+                'Sudden Death' => 'Sudden Death', 
+                'Murder' => 'Murder', 
+                'ID Parade' => 'ID Parade', 
+                'Indications' => 'Indications', 
+                'Other' => 'Other', 
+            ]) 
+            ->required(), 
+
+        Forms\Components\Select::make('photographer_id') 
+            ->label('Assigned Photographer') 
+            ->options(User::where('role', 'PHOTOGRAPHER')->get()->pluck('name', 'id')) 
+            ->required() 
+            ->visible(fn () => Auth::user()?->role === 'ADMIN'), 
+
+        Forms\Components\Select::make('status') 
+            ->options([
+                'OPEN' => 'OPEN', 
+                'PENDING_REVIEW' => 'PENDING_REVIEW', 
+                'CLOSED' => 'CLOSED'
+            ]) 
+            ->default('OPEN') 
+            ->required(), 
+
+        Forms\Components\Textarea::make('circumstances')
+            ->rows(4), 
+
+        Forms\Components\TextInput::make('cause_of_death'), 
+
+        Forms\Components\Repeater::make('people') 
+            ->label('Case participants') 
+            ->addActionLabel('Add person') 
+            ->itemLabel(fn (array $state): ?string => ( 
+                ($state['role'] ?? null) 
+                    ? ucfirst($state['role']).' • '.trim((($state['first_name'] ?? '').' '.($state['surname'] ?? ''))) 
+                    : 'New person' 
+            )) 
+            ->collapsed() 
+            ->schema([ 
+                Forms\Components\Select::make('role') 
+                    ->options([ 
+                        'informant' => 'Informant', 
+                        'deceased' => 'Deceased', 
+                        'accused' => 'Accused', 
+                        'complainant' => 'Complainant', 
+                        'witness' => 'Witness', 
+                        'other' => 'Other', 
+                    ]) 
+                    ->required() 
+                    ->placeholder('Select role'), 
+
+                Forms\Components\TextInput::make('first_name')->required(), 
+
+                Forms\Components\TextInput::make('surname')->required(), 
+
+                Forms\Components\TextInput::make('id_number') 
+                    ->label('ID Number') 
+                    ->live() 
+                    ->inputMode('text') 
+                    ->rule('regex:/^\d{2}-\d{6,7}[A-Z]\d{2}$/i') 
+                    ->helperText('Format: 18-118656Q18'), 
+
+                Forms\Components\Select::make('gender') 
+                    ->options([
+                        'MALE' => 'MALE', 
+                        'FEMALE' => 'FEMALE', 
+                        'UNKNOWN' => 'UNKNOWN'
+                    ]) 
+                    ->placeholder('Select gender'), 
+
+                Forms\Components\TextInput::make('phone_number') 
+                    ->live() 
+                    ->tel() 
+                    ->inputMode('tel') 
+                    ->rule('regex:/^(?:\+263|00263|0)(?:7[1-8]|7[7-9])\d{7}$/'), 
+
+                Forms\Components\Textarea::make('address')->rows(2), 
+
+                Forms\Components\Textarea::make('notes'), 
+            ])->defaultItems(0), 
+
+        Forms\Components\Repeater::make('media') 
+            ->visible(fn (?CaseModel $record = null) => Auth::user()?->role === 'PHOTOGRAPHER' || ($record !== null && Auth::user()?->role === 'ADMIN'))
+            ->addable(fn () => Auth::user()?->role === 'PHOTOGRAPHER') 
+            ->deletable(fn () => Auth::user()?->role === 'PHOTOGRAPHER') 
+            ->reorderable(fn () => Auth::user()?->role === 'PHOTOGRAPHER') 
+            ->disabled(fn () => Auth::user()?->role === 'ADMIN') 
+            ->schema([ 
+                Forms\Components\TextInput::make('title') 
+                    ->required() 
+                    ->placeholder('e.g. Scene photos') 
+                    ->disabled(fn () => Auth::user()?->role === 'ADMIN'), 
+
+                Forms\Components\FileUpload::make('file_path') 
+                    ->disk('public') 
+                    ->directory('case-media') 
+                    ->acceptedFileTypes(['image/*', 'video/*']) 
+                    ->multiple() 
+                    ->maxSize(524288000) 
+                    ->maxFiles(50) 
+                    ->maxParallelUploads(10) 
+                    ->previewable(true) 
+                    ->removeUploadedFileButtonPosition('center bottom') 
+                    ->deletable(fn () => Auth::user()?->role === 'PHOTOGRAPHER') 
+                    ->disabled(fn () => Auth::user()?->role === 'ADMIN'), 
+
+                Forms\Components\Hidden::make('uploaded_by')->default(Auth::id()), 
+            ]), 
+    ]); 
+}
 
     public static function infolist(Schema $schema): Schema
     {

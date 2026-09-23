@@ -10,6 +10,10 @@ class ListStations extends ListRecords
 {
     protected static string $resource = StationResource::class;
 
+    protected array $extraBodyAttributes = [
+        'class' => 'stations-list-page',
+    ];
+
     protected function getHeaderActions(): array
     {
         return [

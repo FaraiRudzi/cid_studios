@@ -96,6 +96,7 @@ class ViewCase extends ViewRecord
                     Forms\Components\CheckboxList::make('photos')
                         ->label('Select photographs for the exhibit')
                         ->options(fn (CaseModel $record): array => $this->getExhibitPhotoOptions($record))
+                        ->allowHtml()
                         ->searchable()
                         ->required()
                         ->columns(2),
@@ -145,7 +146,11 @@ class ViewCase extends ViewRecord
                     continue;
                 }
 
-                $options[$media->getKey().':'.$index] = self::validUtf8($media->title).' - '.self::validUtf8(basename($path));
+                $title = e(self::validUtf8($media->title));
+                $filename = e(self::validUtf8(basename($path)));
+                $imageUrl = e(asset('storage/'.ltrim($path, '/')));
+
+                $options[$media->getKey().':'.$index] = '<span style="align-items:center;display:flex;gap:0.75rem;"><img src="'.$imageUrl.'" alt="" style="background:#f3f4f6;border-radius:0.375rem;height:4.5rem;object-fit:contain;width:6rem;"><span>'.$title.' - '.$filename.'</span></span>';
             }
         }
 

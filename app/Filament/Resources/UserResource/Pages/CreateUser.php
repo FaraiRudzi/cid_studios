@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateUser extends CreateRecord
@@ -10,6 +11,16 @@ class CreateUser extends CreateRecord
     protected static string $resource = UserResource::class;
 
     protected static bool $canCreateAnother = false;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('backToUsers')
+                ->label('Back to Users')
+                ->url(UserResource::getUrl('index'))
+                ->outlined(),
+        ];
+    }
 
     protected function getRedirectUrl(): string
     {
@@ -20,7 +31,7 @@ class CreateUser extends CreateRecord
     {
         return [
             $this->getCreateFormAction()->label('Save User'),
-            $this->getCancelFormAction(),
+            $this->getCancelFormAction()->label('Cancel')->outlined(),
         ];
     }
 }

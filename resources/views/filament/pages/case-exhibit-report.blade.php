@@ -17,7 +17,7 @@
         .title { font-size: 28px; font-weight: 700; text-align: center; }
         .qr-block { text-align: center; }
         .qr { display: block; height: 27mm; margin: 0 auto; width: 27mm; }
-        .qr-label { font-size: 11px; margin-top: 1mm; }
+        .qr-label { display: block; font-size: 11px; margin-top: 1mm; text-align: center; }
         .exhibit-grid { margin-top: 7mm; }
         .exhibit { border-bottom: 1px solid #aaa; height: 116mm; padding: 0 4mm 5mm; }
         .exhibit:last-child { border-bottom: 0; }
@@ -54,7 +54,7 @@
                 <div class="brand">Zimbabwe Republic Police<br>CID Studios</div>
             </div>
             <div class="title">EXHIBIT</div>
-            <div>
+            <div class="qr-block">
                 <img class="qr" src="{{ $pageQrCode }}" alt="Case verification QR code">
                 <div class="qr-label">Scan to verify</div>
             </div>

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CaseResource\Pages;
 
 use App\Filament\Resources\CaseResource;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateCase extends CreateRecord
@@ -10,6 +11,16 @@ class CreateCase extends CreateRecord
     protected static string $resource = CaseResource::class;
 
     protected static bool $canCreateAnother = false;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('backToCases')
+                ->label('Back to Cases')
+                ->url(CaseResource::getUrl('index'))
+                ->outlined(),
+        ];
+    }
 
     protected function afterCreate(): void
     {
@@ -26,7 +37,7 @@ class CreateCase extends CreateRecord
     {
         return [
             $this->getCreateFormAction()->label('Save Case'),
-            $this->getCancelFormAction()->label('Back to Cases'),
+            $this->getCancelFormAction()->label('Cancel')->outlined(),
         ];
     }
 }
