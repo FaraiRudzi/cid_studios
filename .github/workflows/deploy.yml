@@ -17,30 +17,39 @@ jobs:
         run: |
           $destination = "C:\inetpub\wwwroot\cid_studios"
 
-          # Create target directory if missing
           if (-not (Test-Path $destination)) {
               New-Item -ItemType Directory -Path $destination -Force
           }
 
-          # Use Robocopy for reliable file sync without locking errors
+          # Sync code files to IIS folder
           robocopy . $destination /E /XD .git /XF .gitignore /NJH /NJS /NDL /nc /ns /np
-          if ($LASTEXITCODE -ge 8) {
-              throw "Robocopy copy failed with exit code $LASTEXITCODE"
-          }
+          if ($LASTEXITCODE -ge 8) { throw "Robocopy copy failed with exit code $LASTEXITCODE" }
 
           Set-Location $destination
 
-          # Optional Laravel cache refresh
-          if (Test-Path "artisan") {
-              php artisan config:cache
-              php artisan route:cache
-              php artisan view:cache
+          # Locate PHP executable on server dynamically
+          $phpCmd = Get-Command php -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+          if (-not $phpCmd) {
+              $phpCmd = (Get-ChildItem -Path "C:\" -Filter "php.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
           }
 
-          # Attempt IIS AppPool restart safely
+          if (-not $phpCmd) {
+              throw "PHP executable could not be found on the Windows Server."
+          }
+
+          Write-Host "Using PHP executable at: $phpCmd"
+
+          # Run Laravel commands if artisan file is present
+          if (Test-Path "artisan") {
+              & $phpCmd artisan config:cache
+              & $phpCmd artisan route:cache
+              & $phpCmd artisan view:cache
+          }
+
+          # Restart IIS AppPool
           try {
               Import-Module WebAdministration -ErrorAction Stop
               Get-ChildItem IIS:\AppPools | ForEach-Object { Restart-WebAppPool -Name $_.name -ErrorAction SilentlyContinue }
           } catch {
-              Write-Host "Skipping IIS AppPool restart: WebAdministration module not present."
+              Write-Host "IIS WebAdministration module not loaded."
           }
