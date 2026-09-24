@@ -12,18 +12,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # STEP 1: Set up Node.js and build frontend assets
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22' # FIX: Corrected from 'node-node' to 'node-version' and bumped to stable v22
-
-      - name: Install Frontend Dependencies & Build Assets
-        run: |
-          npm install
-          npm run build
-
-      # STEP 2: Deploy and configure the Laravel application
       - name: Sync Files to IIS Web Root
         shell: powershell
         run: |
@@ -33,8 +21,8 @@ jobs:
               New-Item -ItemType Directory -Path $destination -Force
           }
 
-          # Sync code files (including compiled public/build folder) to IIS folder
-          robocopy . $destination /E /XD .git node_modules /XF .gitignore /NJH /NJS /NDL /nc /ns /np
+          # Sync code files to IIS folder
+          robocopy . $destination /E /XD .git /XF .gitignore /NJH /NJS /NDL /nc /ns /np
           if ($LASTEXITCODE -ge 8) { throw "Robocopy copy failed with exit code $LASTEXITCODE" }
 
           Set-Location $destination
@@ -51,18 +39,17 @@ jobs:
 
           Write-Host "Using PHP executable at: $phpCmd"
 
-          # Run optimal Laravel & Filament v5 caching commands if artisan is present
+          # Run Laravel commands if artisan file is present
           if (Test-Path "artisan") {
-              & $phpCmd artisan optimize
-              & $phpCmd artisan event:cache
+              & $phpCmd artisan config:cache
+              & $phpCmd artisan route:cache
+              & $phpCmd artisan view:cache
           }
 
-          # Restart IIS AppPool cleanly
+          # Restart IIS AppPool
           try {
               Import-Module WebAdministration -ErrorAction Stop
-              Restart-WebAppPool -Name "DefaultAppPool" 
-              Write-Host "IIS AppPool restarted successfully."
+              Get-ChildItem IIS:\AppPools | ForEach-Object { Restart-WebAppPool -Name $_.name -ErrorAction SilentlyContinue }
           } catch {
-              Write-Host "IIS WebAdministration module not loaded or AppPool restart failed. Falling back to global IIS cycle."
-              iisreset /timeout:0
+              Write-Host "IIS WebAdministration module not loaded."
           }
