@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Login; 
+use App\Filament\Pages\Auth\RequestPasswordReset;
 use App\Filament\Widgets\PhotographerStatsOverview;
 use Filament\Actions\Action;
 use Filament\Enums\UserMenuPosition;
@@ -28,7 +30,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('/')
-            ->login()
+            ->login(Login::class)       // Enables custom split login page
+            ->passwordReset()            // Enables "Forgot Password?" link
+            ->passwordReset(RequestPasswordReset::class)
             ->brandName('CID Studios')
             ->favicon(asset('badge.jpeg'))
             ->viteTheme(['resources/css/filament/admin/theme.css'])

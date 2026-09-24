@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
 
 :root {
     --studio-page-width: 100%;
@@ -144,7 +148,60 @@ body {
 }
 
 .fi-simple-main-ctn {
-    max-width: 28rem !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}
+
+.fi-simple-main {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* ============================================================
+   CID STUDIOS — CUSTOM LOGIN
+   ============================================================ */
+
+.fi-simple-layout {
+    min-height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #07182f !important;
+}
+
+.fi-simple-layout .fi-simple-main-ctn {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.fi-simple-layout .fi-simple-main {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Prevent Filament's normal auth card styling */
+.fi-simple-layout .fi-simple-main > * {
+    width: 100%;
 }
 
 .fi-simple-header {
@@ -606,6 +663,95 @@ body {
     font-size: 0.8rem;
     line-height: 1.45;
     color: rgb(51, 65, 85);
+}
+
+/* ============================================================
+   CID STUDIOS LOGIN - LIGHT AUTHENTICATION FORM
+   ============================================================ */
+
+.cid-login {
+    color: #10243e;
+}
+
+/* Form labels */
+.cid-login .fi-fo-field-wrp-label {
+    color: #10243e !important;
+    font-weight: 600 !important;
+}
+
+/* Required asterisk */
+.cid-login .fi-fo-field-wrp-label span {
+    color: #10243e !important;
+}
+
+/* Helper text */
+.cid-login .fi-fo-field-wrp-helper-text {
+    color: #62748a !important;
+}
+
+/* Inputs */
+.cid-login .fi-input,
+.cid-login .fi-select-input,
+.cid-login .fi-fo-textarea {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #10243e !important;
+}
+
+/* Input text */
+.cid-login .fi-input {
+    color: #10243e !important;
+}
+
+/* Placeholder */
+.cid-login .fi-input::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Input wrapper */
+.cid-login .fi-input-wrp {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Focus */
+.cid-login .fi-input-wrp:focus-within {
+    border-color: #00205b !important;
+    box-shadow: 0 0 0 3px rgba(0, 32, 91, 0.10) !important;
+}
+
+/* Password visibility button */
+.cid-login .fi-input-wrp button {
+    color: #62748a !important;
+}
+
+.cid-login .fi-input-wrp button:hover {
+    color: #00205b !important;
+}
+
+/* Remember me label */
+.cid-login .fi-checkbox-label {
+    color: #10243e !important;
+}
+
+/* Checkbox */
+.cid-login input[type="checkbox"] {
+    accent-color: #00205b;
+}
+
+/* Forgot password link */
+.cid-login a {
+    color: #00205b !important;
+    font-weight: 600;
+}
+
+.cid-login a:hover {
+    color: #b28a16 !important;
+}
+
+/* Validation/error messages */
+.cid-login .fi-fo-field-wrp-error-message {
+    color: #b42318 !important;
 }
 
 @media (max-width: 768px) {
