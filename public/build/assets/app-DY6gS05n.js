@@ -1,0 +1,1 @@
+document.addEventListener(`DOMContentLoaded`,()=>{document.querySelectorAll(`form`).forEach(e=>{e.addEventListener(`submit`,()=>{let t=e.querySelector(`button[type="submit"]`);t&&(t.disabled=!0,t.dataset.originalText=t.textContent,t.textContent=`Loading...`)})})});
