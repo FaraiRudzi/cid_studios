@@ -36,13 +36,16 @@ jobs:
           # ----------------------------------------------------
           # AUTOMATED FRONTEND BUILD PIPELINE
           # ----------------------------------------------------
+          # Swap out the old npm block with this robust version inside your script:
           if (Get-Command npm -ErrorAction SilentlyContinue) {
               Write-Host "Running npm installation and production compilation..."
-              npm install --no-audit --no-fund
-              npm run build
+              # Using cmd /c prevents PowerShell from choking on npm execution policies
+              cmd /c "npm install --no-audit --no-fund"
+              cmd /c "npm run build"
           } else {
-              Write-Warning "npm was not found on the server environment path. Skipping automatic compilation."
+              throw "npm is not installed or not available in the system environment PATH variables."
           }
+
 
           # ----------------------------------------------------
           # AUTOMATED BACKEND LARAVEL PIPELINE
