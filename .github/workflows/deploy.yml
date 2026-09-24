@@ -12,6 +12,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # STEP 1: Set up Node.js directly on the runner to compile frontend files
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Pulls a stable, modern LTS release to keep the runner environment clean
+
       - name: Sync Files to IIS Web Root and Build Assets
         shell: powershell
         run: |
@@ -21,7 +27,7 @@ jobs:
               New-Item -ItemType Directory -Path $destination -Force
           }
 
-          # Sync code files to IIS folder (Excluding tracking folders and local dev dependencies)
+          # Sync code files (Excludes massive repository metadata and dev dependencies)
           robocopy . $destination /E /XD .git node_modules /XF .gitignore /NJH /NJS /NDL /nc /ns /np
           if ($LASTEXITCODE -ge 8) { throw "Robocopy copy failed with exit code $LASTEXITCODE" }
 
@@ -30,13 +36,12 @@ jobs:
           # ----------------------------------------------------
           # AUTOMATED FRONTEND BUILD PIPELINE
           # ----------------------------------------------------
-          # Check for npm and dynamically compile frontend assets in the target directory
           if (Get-Command npm -ErrorAction SilentlyContinue) {
               Write-Host "Running npm installation and production compilation..."
               npm install --no-audit --no-fund
               npm run build
           } else {
-              Write-Warning "npm was not found on the server environment variable path. Skipping automatic compilation."
+              Write-Warning "npm was not found on the server environment path. Skipping automatic compilation."
           }
 
           # ----------------------------------------------------
@@ -54,22 +59,20 @@ jobs:
 
           Write-Host "Using PHP executable at: $phpCmd"
 
-          # Run Laravel optimization commands if artisan file is present
+          # Run optimal Laravel & Filament v5 compilation arrays if artisan is present
           if (Test-Path "artisan") {
-              & $phpCmd artisan config:cache
-              & $phpCmd artisan route:cache
-              & $phpCmd artisan view:cache
+              & $phpCmd artisan optimize
+              & $phpCmd artisan event:cache
           }
 
           # ----------------------------------------------------
           # AUTOMATED IIS SERVER RESET
           # ----------------------------------------------------
-          # Restart IIS AppPools to reflect recent changes safely
           try {
               Import-Module WebAdministration -ErrorAction Stop
               Get-ChildItem IIS:\AppPools | ForEach-Object { Restart-WebAppPool -Name $_.name -ErrorAction SilentlyContinue }
               Write-Host "All IIS AppPools successfully recycled."
           } catch {
-              Write-Host "IIS WebAdministration module not loaded. Falling back to clean global system check."
+              Write-Host "IIS WebAdministration module not loaded. Falling back to global system cycle."
               iisreset /timeout:0
           }
