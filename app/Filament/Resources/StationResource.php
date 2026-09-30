@@ -32,6 +32,17 @@ class StationResource extends Resource
         return auth()->user()?->isAdmin() ?? false;
     }
 
+    /** A station that has cases cannot be deleted (the foreign key would refuse it anyway). */
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return (auth()->user()?->isAdmin() ?? false) && ! $record->cases()->exists();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([

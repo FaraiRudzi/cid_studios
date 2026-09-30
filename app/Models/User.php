@@ -60,6 +60,17 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->role === 'PHOTOGRAPHER';
     }
 
+    /** Single source of truth for "may this user see this case and its evidence?". */
+    public function canAccessCase(CaseModel $case): bool
+    {
+        if (! ($this->is_active ?? true)) {
+            return false;
+        }
+
+        return $this->isAdmin()
+            || ($this->isPhotographer() && (int) $case->photographer_id === (int) $this->getKey());
+    }
+
     public function assignedCases(): HasMany
     {
         return $this->hasMany(CaseModel::class, 'photographer_id');

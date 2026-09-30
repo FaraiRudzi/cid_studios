@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CaseModel extends Model
 {
+    /** A locked case can only be changed by an administrator changing its status. */
+    public const LOCKED_STATUSES = ['CLOSED', 'ARCHIVED'];
+
+    /** The only statuses a photographer may choose. */
+    public const PHOTOGRAPHER_STATUSES = ['OPEN', 'PENDING_REVIEW'];
+
     protected $table = 'cases';
 
     protected $fillable = [
@@ -22,6 +28,17 @@ class CaseModel extends Model
         'status',
         'created_by',
     ];
+
+    /**
+     * Reason supplied by an admin action (reassign / status change).
+     * Read by CaseObserver and written to the audit log; never persisted on the case.
+     */
+    public ?string $auditReason = null;
+
+    public function isLocked(): bool
+    {
+        return in_array($this->status, self::LOCKED_STATUSES, true);
+    }
 
     public function station(): BelongsTo
     {
@@ -52,6 +69,6 @@ class CaseModel extends Model
 
     public function logs(): HasMany
     {
-        return $this->hasMany(CaseLog::class, 'case_id')->orderBy('created_at', 'desc');
+        return $this->hasMany(CaseLog::class, 'case_id')->orderBy('created_at', 'desc')->orderBy('id', 'desc');
     }
 }

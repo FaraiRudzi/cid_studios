@@ -69,6 +69,16 @@
                     <div class="caption">
                         <div class="exhibit-number">EXHIBIT {{ str_pad((string) ($loop->parent->index * 2 + $index + 1), 3, '0', STR_PAD_LEFT) }}</div>
                         <div class="description">{{ $exhibit['media']->description ?: $exhibit['media']->title }}</div>
+                        <div style="font:7px/1.3 monospace;word-break:break-all;margin-top:3px;">
+                            SHA-256: {{ $exhibit['hash'] }}<br>
+                            @if(($exhibit['verified'] ?? null) === true)
+                                Matches the hash recorded at upload.
+                            @elseif(($exhibit['verified'] ?? null) === false)
+                                WARNING: DOES NOT MATCH THE HASH RECORDED AT UPLOAD.
+                            @else
+                                No upload hash on record (legacy item).
+                            @endif
+                        </div>
                     </div>
                 </section>
             @endforeach

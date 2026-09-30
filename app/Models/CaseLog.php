@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use App\Exceptions\EvidenceProtectionException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Append-only audit entry. Once written it can be neither edited nor deleted
+ * through the application. (Also revoke UPDATE/DELETE on this table for the
+ * application's database user - see CHANGES.md.)
+ */
 class CaseLog extends Model
 {
     public $timestamps = false;
@@ -17,6 +23,21 @@ class CaseLog extends Model
         'metadata' => 'array',
         'created_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (CaseLog $log): void {
+            $log->created_at ??= now();
+        });
+
+        static::updating(function (): void {
+            throw new EvidenceProtectionException('Audit log entries are append-only and cannot be edited.');
+        });
+
+        static::deleting(function (): void {
+            throw new EvidenceProtectionException('Audit log entries cannot be deleted.');
+        });
+    }
 
     public function case(): BelongsTo
     {

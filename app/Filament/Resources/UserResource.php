@@ -33,6 +33,17 @@ class UserResource extends Resource
         return Auth::user()?->role === 'ADMIN';
     }
 
+    /** Users are deactivated, never deleted: audit entries and uploads must keep their author. */
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
@@ -50,9 +61,10 @@ class UserResource extends Resource
                 ->password()
                 ->revealable()
                 ->required(fn (string $context): bool => $context === 'create')
-                ->minLength(8)
+                ->minLength(12)
                 ->maxLength(255)
-                ->dehydrateStateUsing(fn (?string $state) => filled($state) ? Hash::make($state) : null),
+                ->dehydrateStateUsing(fn (?string $state) => filled($state) ? Hash::make($state) : null)
+                ->dehydrated(fn (?string $state): bool => filled($state)),
             Forms\Components\TextInput::make('phone_number')
                 ->live()
                 ->tel()

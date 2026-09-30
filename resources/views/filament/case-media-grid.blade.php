@@ -9,28 +9,33 @@
             <div class="case-media-header">{{ $title }}</div>
             <div class="case-media-items">
                 @foreach($mediaGroup as $media)
-                    @php
-                        $paths = $media->getFilePaths();
-                    @endphp
+                    @if($media->isRemoved())
+                        <div class="case-media-item" style="padding:.75rem;font-size:.8rem;opacity:.8;">
+                            Removed {{ $media->removed_at?->format('d M Y H:i') }}
+                            @if($media->removal_reason) &mdash; {{ $media->removal_reason }} @endif
+                            <br>The file and record are retained for the audit trail.
+                        </div>
+                        @continue
+                    @endif
 
-                    @foreach($paths as $path)
+                    @foreach($media->getFilePaths() as $index => $path)
                         @php
-                            $normalized = is_string($path) ? trim($path) : null;
-                            $fullUrl = $normalized ? Storage::disk('public')->url($normalized) : null;
-                            $isVideo = (str_contains((string) ($media->file_type ?? ''), 'video') || preg_match('/\.(mp4|mov|avi|m4v|webm|mkv)$/i', (string) $normalized))
-                                ? true
-                                : false;
+                            $url = \App\Services\EvidenceStorage::urlFor($media, $index);
+                            $hash = $media->hashFor($path);
+                            $isVideo = str_contains((string) ($media->file_type ?? ''), 'video')
+                                || preg_match('/\.(mp4|mov|avi|m4v|webm|mkv)$/i', (string) $path);
                         @endphp
 
-                        @if($normalized && $fullUrl)
-                            <div class="case-media-item">
-                                @if($isVideo)
-                                    <video controls preload="metadata" src="{{ $fullUrl }}"></video>
-                                @else
-                                    <img src="{{ $fullUrl }}" alt="{{ $title }}" loading="lazy" />
-                                @endif
+                        <div class="case-media-item">
+                            @if($isVideo)
+                                <video controls preload="metadata" src="{{ $url }}"></video>
+                            @else
+                                <img src="{{ $url }}" alt="{{ $title }}" loading="lazy" />
+                            @endif
+                            <div style="font:11px/1.3 monospace;word-break:break-all;opacity:.7;margin-top:.25rem;">
+                                SHA-256 {{ $hash ? substr($hash, 0, 16).'…' : 'not recorded (legacy item)' }}
                             </div>
-                        @endif
+                        </div>
                     @endforeach
                 @endforeach
             </div>

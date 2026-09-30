@@ -47,6 +47,16 @@ return [
             'report' => false,
         ],
 
+        // Private evidence store. Not web-accessible: no symlink, no public URL.
+        // Files are only streamed through the authorised "cases.media.file" route.
+        'evidence' => [
+            'driver' => 'local',
+            'root' => env('EVIDENCE_ROOT', storage_path('app/evidence')),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

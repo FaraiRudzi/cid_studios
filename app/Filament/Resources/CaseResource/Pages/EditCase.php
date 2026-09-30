@@ -2,9 +2,14 @@
 
 namespace App\Filament\Resources\CaseResource\Pages;
 
+use App\Exceptions\EvidenceProtectionException;
 use App\Filament\Resources\CaseResource;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class EditCase extends EditRecord
 {
@@ -20,17 +25,37 @@ class EditCase extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
-        $record = parent::handleRecordUpdate($record, $data);
+        try {
+            return DB::transaction(function () use ($record, $data): Model {
+                // Whitelist: a photographer can never change assignment, scene reference or creator here.
+                $attributes = Arr::only($data, [
+                    'reference_number', 'station_id', 'case_type', 'circumstances', 'cause_of_death', 'status',
+                ]);
 
-        if (array_key_exists('people', $data)) {
-            CaseResource::syncCasePeople($record, $data['people']);
+                $record = parent::handleRecordUpdate($record, $attributes);
+
+                if (array_key_exists('people', $data)) {
+                    CaseResource::syncCasePeople($record, $data['people'] ?? []);
+                }
+
+                if (! empty($data['media'])) {
+                    CaseResource::syncCaseMedia($record, $data['media']);
+                }
+
+                return $record;
+            });
+        } catch (EvidenceProtectionException|AuthorizationException $e) {
+            // The transaction has been rolled back, so nothing was partly saved.
+            Notification::make()
+                ->title('Changes were not saved')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            $this->halt();
+
+            throw $e;
         }
-
-        if (array_key_exists('media', $data)) {
-            CaseResource::syncCaseMedia($record, $data['media']);
-        }
-
-        return $record;
     }
 
     protected function mutateFormDataBeforeFill(array $data): array
@@ -48,16 +73,8 @@ class EditCase extends EditRecord
             'notes' => $person->pivot?->notes,
         ])->all();
 
-        $data['media'] = $this->record->media->map(fn ($media): array => [
-            'id' => $media->getKey(),
-            'title' => $media->title,
-            'category' => $media->category,
-            'file_path' => $media->getFilePaths(),
-            'file_type' => $media->file_type,
-            'file_size' => $media->file_size,
-            'description' => $media->description,
-            'uploaded_by' => $media->uploaded_by,
-        ])->all();
+        // Existing media is never loaded into the form: it is append-only and is shown on the case page.
+        $data['media'] = [];
 
         return $data;
     }

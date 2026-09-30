@@ -70,23 +70,32 @@
     <h2>Media Evidence ({{ $case->media->count() }})</h2>
     @forelse($case->media as $media)
         <section class="media">
-            <h3>{{ $media->title }}</h3>
+            <h3>{{ $media->title }}@if($media->isRemoved()) (REMOVED {{ $media->removed_at?->format('d M Y H:i') }}: {{ $media->removal_reason }})@endif</h3>
             <div class="grid">
                 <div class="field"><div class="label">Uploaded by</div><div>{{ $media->uploader?->name ?? 'Not recorded' }}</div></div>
                 <div class="field"><div class="label">Uploaded at</div><div>{{ $media->created_at?->format('d M Y H:i:s T') }}</div></div>
             </div>
             @foreach($media->getFilePaths() as $path)
                 @php
-                    $absolutePath = Storage::disk('public')->path($path);
-                    $exists = is_file($absolutePath);
+                    $evidenceDisk = \App\Services\EvidenceStorage::disk();
+                    $exists = \App\Services\EvidenceStorage::isAcceptablePath($path) && $evidenceDisk->exists($path);
+                    $absolutePath = $exists ? $evidenceDisk->path($path) : null;
                     $mime = $exists ? (mime_content_type($absolutePath) ?: 'application/octet-stream') : null;
                     $hash = $exists ? hash_file('sha256', $absolutePath) : null;
+                    $recordedHash = $media->hashFor($path);
                     $isImage = $exists && str_starts_with($mime, 'image/');
                     $dataUri = $isImage ? 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($absolutePath)) : null;
                 @endphp
                 <div class="field">
                     <div class="label">File path</div><div>{{ $path }}</div>
-                    <div class="label">SHA-256</div><div class="hash">{{ $hash ?: 'File not available on server' }}</div>
+                    <div class="label">SHA-256 (now)</div><div class="hash">{{ $hash ?: 'File not available on server' }}</div>
+                    <div class="label">SHA-256 (recorded)</div>
+                    <div class="hash">
+                        {{ $recordedHash ?: 'No hash recorded for this legacy item' }}
+                        @if($hash && $recordedHash)
+                            &mdash; <strong>{{ hash_equals($recordedHash, $hash) ? 'MATCH' : 'MISMATCH - FILE HAS CHANGED' }}</strong>
+                        @endif
+                    </div>
                     @if($dataUri)
                         <img class="evidence-image" src="{{ $dataUri }}" alt="{{ $media->title }}">
                     @endif
